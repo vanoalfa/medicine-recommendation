@@ -3,12 +3,13 @@ from telegram import Bot, Update
 from telegram.ext import Dispatcher, MessageHandler, filters
 from VSMModel import VSMModel
 import pandas as pd
+import os
 
-TOKEN = "7998502915:AAHBzZc09gkTvGHOn0r8ZHbn2EC7B39yDPs"  # Ganti token di sini
+TOKEN = os.environ.get("API_TELEGRAM")  # Gunakan variabel lingkungan di Render
 bot = Bot(token=TOKEN)
 app = Flask(__name__)
 
-# Load dataset satu kali saat server di-start
+# Load dataset satu kali saat server start
 document_df = pd.read_csv("product_preprocessed.csv")
 
 @app.route("/")
@@ -26,10 +27,18 @@ def webhook():
 def handle_message(update, context):
     user_input = update.message.text
     try:
-        result_text = VSMModel(user_input, document_df=document_df)
-        update.message.reply_text(result_text[:4090])  # Telegram max char = 4096
+        result_df = VSMModel(user_input, document_df=document_df)
+        if result_df.empty:
+            update.message.reply_text("Maaf, tidak ada dokumen yang relevan ditemukan.")
+        else:
+            response_text = ""
+            for _, row in result_df.head(3).iterrows():  # Batasin 3 hasil
+                response_text += f"📌 *{row['title']}*\n🔗 {row['url']}\n🔍 {row['original_text']}\n\n"
+            update.message.reply_text(response_text[:4090])  # Telegram limit
     except Exception as e:
-        update.message.reply_text(f"Terjadi kesalahan:\n{str(e)}")
+        update.message.reply_text(f"❌ Terjadi kesalahan:\n{str(e)}")
 
+# Jalankan server Flask dengan port dari Render
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
