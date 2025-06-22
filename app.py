@@ -4,7 +4,7 @@ from telegram.ext import Dispatcher, MessageHandler, filters
 from VSMModel import VSMModel
 import pandas as pd
 
-TOKEN = "ISI_DENGAN_TOKEN_BOT_KAMU"  # Ganti token di sini
+TOKEN = "7998502915:AAHBzZc09gkTvGHOn0r8ZHbn2EC7B39yDPs"  # Ganti token di sini
 bot = Bot(token=TOKEN)
 app = Flask(__name__)
 
