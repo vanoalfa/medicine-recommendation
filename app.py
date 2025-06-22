@@ -5,7 +5,7 @@ from vsm_model import VSMModel
 
 app = Flask(__name__)
 
-TOKEN = "7998502915:AAHjDp6fNxYe7Hv4tgPhXDU_yyrU-KBOGWY"
+TOKEN = "7998502915:AAHBzZc09gkTvGHOn0r8ZHbn2EC7B39yDPs"
 URL = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
 # Load data
