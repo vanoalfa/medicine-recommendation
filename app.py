@@ -1,43 +1,35 @@
 from flask import Flask, request
+from telegram import Bot, Update
+from telegram.ext import Dispatcher, MessageHandler, filters
+from VSMModel import VSMModel
 import pandas as pd
-import requests
-from vsm_model import VSMModel
 
+TOKEN = "ISI_DENGAN_TOKEN_BOT_KAMU"  # Ganti token di sini
+bot = Bot(token=TOKEN)
 app = Flask(__name__)
 
-TOKEN = "7998502915:AAHBzZc09gkTvGHOn0r8ZHbn2EC7B39yDPs"
-URL = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-
-# Load data
+# Load dataset satu kali saat server di-start
 document_df = pd.read_csv("product_preprocessed.csv")
-document_df['product_preprocessed'] = document_df['product_preprocessed'].apply(eval)
 
-@app.route("/", methods=["POST"])
+@app.route("/")
+def index():
+    return "Bot is running!"
+
+@app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.get_json()
+    update = Update.de_json(request.get_json(force=True), bot)
+    dispatcher = Dispatcher(bot, None, workers=0, use_context=True)
+    dispatcher.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
+    dispatcher.process_update(update)
+    return "ok", 200
 
-    if "message" in data:
-        chat_id = data["message"]["chat"]["id"]
-        query = data["message"].get("text", "")
+def handle_message(update, context):
+    user_input = update.message.text
+    try:
+        result_text = VSMModel(user_input, document_df=document_df)
+        update.message.reply_text(result_text[:4090])  # Telegram max char = 4096
+    except Exception as e:
+        update.message.reply_text(f"Terjadi kesalahan:\n{str(e)}")
 
-        # Jalankan VSMModel
-        results = VSMModel(Pencarian, document_df)
-
-        if results.empty:
-            reply = "Maaf, tidak ditemukan produk yang relevan."
-        else:
-            top = results.iloc[0]
-            reply = (
-                f"🔍 *Hasil Pencarian Obat:*\n"
-                f"*{top['title']}* (Similarity: {top['similarity']:.2f})\n"
-                f"{top['original_text']}\n"
-                f"[Link Produk]({top['url']})"
-            )
-
-        requests.post(URL, json={
-            "chat_id": chat_id,
-            "text": reply,
-            "parse_mode": "Markdown"
-        })
-
-    return {"ok": True}
+if __name__ == "__main__":
+    app.run(debug=True)
