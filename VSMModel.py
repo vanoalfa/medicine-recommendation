@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 
 nltk.download('punkt')
 
-def VSMModel(Pencarian, document_df=pd.read_csv('/content/product_preprocessed.csv')):
+def VSMModel(Pencarian, document_df=pd.read_csv('product_preprocessed.csv')):
     #Instalasi model embedding
     embedding_model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
